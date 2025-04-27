@@ -15,9 +15,9 @@ VAL_DIR = os.path.join(DATA_DIR, 'valid', 'images')
 TEST_DIR = os.path.join(DATA_DIR, 'test', 'images')
 
 CONFIG_FILE = 'obb_config.yaml'
-MODEL_NAME = 'yolov8n-obb.pt'
+MODEL_NAME = 'military_detect_best.pt'
 
-EPOCHS = 30
+EPOCHS = 10
 IMG_SIZE = 640
 BATCH_SIZE = 32
 
@@ -43,7 +43,7 @@ with open(CONFIG_FILE, 'w') as f:
 print(f"📄 YAML файл збережено: {CONFIG_FILE}")
 
 # 4. Навчання моделі YOLOv8 OBB
-model = YOLO(MODEL_NAME)
+model = YOLO('app/models/military_detect_best.pt')
 
 results = model.train(
     data=CONFIG_FILE,
@@ -53,10 +53,10 @@ results = model.train(
     patience=10,
     workers=4,
     optimizer='SGD',
+    lr0=0.001,  
     cos_lr=True,
     verbose=True
 )
-
 # 5. Збереження історії втрат
 history = {
     'train_loss': results.metrics.box_loss,

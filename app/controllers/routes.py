@@ -1,3 +1,4 @@
+import os
 from flask import Blueprint, render_template, request, redirect, url_for
 from app.models.detection_model import predict_image
 
@@ -19,10 +20,12 @@ def predict():
 
     if image:
         try:
-            predicted_class, confidence = predict_image(image)
-            return render_template('results.html', 
-                                    predicted_class=predicted_class,
-                                    confidence=round(confidence * 100, 2))
+            predicted_class, confidence, annotated_image_path = predict_image(image)
+            result_image = os.path.basename(annotated_image_path)
+            return render_template('results.html',
+                        predicted_class=predicted_class,
+                        confidence=round(confidence * 100, 2),
+                        result_image=os.path.basename(annotated_image_path))
         except Exception as e:
             return render_template('error.html', error_message=f"Помилка обробки зображення: {str(e)}")
 
@@ -31,3 +34,4 @@ def predict():
 @main.app_errorhandler(404)
 def page_not_found(error):
     return render_template('404.html'), 404
+

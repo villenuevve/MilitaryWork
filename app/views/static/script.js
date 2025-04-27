@@ -19,7 +19,6 @@ function handleFiles(e) {
     }
 }
 
-// Показати / сховати лоадер
 function showLoader() {
     loaderOverlay.classList.add('visible');
 }
@@ -28,7 +27,6 @@ function hideLoader() {
     loaderOverlay.classList.remove('visible');
 }
 
-// Сповіщення
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
@@ -46,7 +44,6 @@ function showNotification(message, type = 'success') {
     }, 3000);
 }
 
-// Відправка файлу
 submitBtn.addEventListener('click', async (e) => {
     e.preventDefault();
 
@@ -56,7 +53,6 @@ submitBtn.addEventListener('click', async (e) => {
         return;
     }
 
-    // Показати лоадер
     showLoader();
 
     const formData = new FormData();
@@ -78,7 +74,7 @@ submitBtn.addEventListener('click', async (e) => {
             showNotification(`Помилка: ${data.error}`, 'error');
         } else {
             showNotification('Успішно завантажено!', 'success');
-            // Через 1 секунду після повідомлення перейти на results
+            
             setTimeout(() => {
                 window.location.href = `/result?class=${data.class}&confidence=${data.confidence}&angle=${data.angle}`;
             }, 1000);
@@ -101,10 +97,10 @@ function startFakeProgress() {
     let width = 0;
 
     const interval = setInterval(() => {
-        if (width >= 90) { // Залишимо трохи простору для реального завершення
+        if (width >= 90) { 
             clearInterval(interval);
         } else {
-            width += Math.random() * 2; // Рандомно +1..2% для реалістичності
+            width += Math.random() * 2; 
             progressBar.style.width = width + '%';
         }
     }, 200); // Кожні 200мс

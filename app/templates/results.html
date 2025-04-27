@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Результат Виявлення</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Результат Виявлення</h1>
+
+        <div class="result-card">
+            <h2>Клас: <span class="highlight">{{ predicted_class }}</span></h2>
+
+            <div class="progress-bar-container">
+                <div class="progress-bar" style="width: {{ confidence }}%;"></div>
+            </div>
+
+            <p class="confidence-text">Впевненість: {{ confidence }}%</p>
+
+            {% if result_image %}
+            <h3>Виявлене зображення:</h3>
+            <img src="{{ url_for('static', filename='predictions/' + result_image) }}" alt="Результат обробки" class="result-image">
+            {% endif %}
+
+            <a href="{{ url_for('main.index') }}">
+                <button class="back-btn">← Повернутись</button>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
+
