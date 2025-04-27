@@ -1,2 +1,2 @@
 # MilitaryWork
-diploma
+Diploma
