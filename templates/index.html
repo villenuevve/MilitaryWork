@@ -4,22 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Military Detection</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
+    <link rel="stylesheet" href="{{ request.url_for('static', path='style.css') }}">
 </head>
 <body>
     <div class="container">
         <h1>Виявлення Військової Техніки</h1>
+    
         <div class="upload-section">
             <form action="/predict" method="POST" enctype="multipart/form-data" id="upload-form">
-                <div class="upload-area" id="upload-area">
-                    <input type="file" id="file-input" name="image" accept="image/*">
-                    <p>Перетягніть або натисніть для вибору зображення</p>
-                </div>
+                <input type="file" id="file-input" name="image" accept="image/*" required hidden>
+    
+                <label for="file-input" class="custom-file-button">
+                    Вибрати файл для аналізу
+                </label>
+    
                 <button type="submit" id="submit-btn">Аналізувати</button>
             </form>
         </div>
-    </div>
+    </div>    
 
     <div class="loader-overlay" id="loader-overlay">
         <div class="loader"></div>
@@ -29,6 +31,6 @@
         <div class="progress-bar" id="progress-bar"></div>
     </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ request.url_for('static', path='script.js') }}"></script>
 </body>
 </html>

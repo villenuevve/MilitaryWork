@@ -1,10 +1,13 @@
+# run.py
+
 from fastapi import FastAPI, UploadFile, File
 from ultralytics import YOLO
-import cv2
 import numpy as np
+import cv2
+import io
 
 app = FastAPI()
-model = YOLO("yolov8n-obb.pt")
+model = YOLO("app/models/yolov8n-obb.pt")
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):

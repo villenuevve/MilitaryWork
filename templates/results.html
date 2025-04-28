@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Результат Виявлення</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ request.url_for('static', path='style.css') }}">
 </head>
 <body>
     <div class="container">
@@ -19,16 +19,10 @@
 
             <p class="confidence-text">Впевненість: {{ confidence }}%</p>
 
-            {% if result_image %}
-            <h3>Виявлене зображення:</h3>
-            <img src="{{ url_for('static', filename='predictions/' + result_image) }}" alt="Результат обробки" class="result-image">
-            {% endif %}
-
-            <a href="{{ url_for('main.index') }}">
+            <a href="{{ request.url_for('home') }}">
                 <button class="back-btn">← Повернутись</button>
             </a>
         </div>
     </div>
 </body>
 </html>
-

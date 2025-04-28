@@ -144,6 +144,22 @@ img {
     right: 20px;
 }
 
+.file-label {
+    display: inline-block;
+    padding: 10px 20px;
+    margin-top: 10px;
+    background: #00d4ff;
+    color: #fff;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.file-label:hover {
+    background: #00b8e6;
+}
+
 @keyframes backgroundMove {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }

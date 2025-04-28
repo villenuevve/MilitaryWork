@@ -1,50 +1,69 @@
-from flask import Flask, request, jsonify, render_template
-import tensorflow as tf
+from pathlib import Path
+from fastapi import FastAPI, UploadFile, File, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from ultralytics import YOLO
 import numpy as np
-from PIL import Image
-import io
+import cv2
 
-app = Flask(__name__)
+# Абсолютний шлях до каталогу проекту
+BASE_DIR = Path(__file__).resolve().parent
 
-model = tf.keras.models.load_model('final_model.keras')
+# Ініціалізація FastAPI
+app = FastAPI()
 
-CLASSES = ['aaa', 'acsv', 'app', 'artillery', 'lav', 'mlrs', 'tank']
+# Підключення статики і шаблонів
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
-def preprocess_image(image):
-    """Попередня обробка зображення"""
-    image = image.resize((224, 224))
-    image_array = tf.keras.preprocessing.image.img_to_array(image)
-    image_array = image_array / 255.0
-    image_array = np.expand_dims(image_array, axis=0)
-    return image_array
+# Завантаження моделі
+model = YOLO(BASE_DIR / "app" / "models" / "military_detect_best.pt")  # <-- Обов'язково через BASE_DIR
 
-@app.route('/')
-def home():
-    return render_template('index.html')
+# Список класів
+CLASSES = ['helicopter', 'jet', 'sam', 'tank', 'truck']
 
-@app.route('/predict', methods=['POST'])
-def predict():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file uploaded'})
-    
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'})
-    
+# Головна сторінка
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+# Обробка передбачення
+@app.post("/predict", response_class=HTMLResponse)
+async def predict(request: Request, image: UploadFile = File(...)):
     try:
-        image = Image.open(io.BytesIO(file.read()))
-        processed_image = preprocess_image(image)
-        predictions = model.predict(processed_image)
-        predicted_class = CLASSES[np.argmax(predictions[0])]
-        confidence = float(predictions[0][np.argmax(predictions[0])])
-        
-        return jsonify({
-            'class': predicted_class,
-            'confidence': confidence
-        })
-    
-    except Exception as e:
-        return jsonify({'error': str(e)})
+        contents = await image.read()
+        nparr = np.frombuffer(contents, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+        if img is None:
+            return templates.TemplateResponse("error.html", {
+                "request": request,
+                "error_message": "Помилка обробки файлу. Завантажте коректне зображення."
+            })
+
+        results = model(img)
+        result = results[0]
+
+        # Перевірка наявності об'єкта
+        if not result.obb or result.obb.cls is None or len(result.obb.cls) == 0:
+            return templates.TemplateResponse("error.html", {
+                "request": request,
+                "error_message": "На зображенні не виявлено жодного об'єкта."
+            })
+
+        class_id = int(result.obb.cls[0])
+        confidence = float(result.obb.conf[0]) * 100
+        predicted_class = CLASSES[class_id]
+
+        return templates.TemplateResponse("results.html", {
+            "request": request,
+            "predicted_class": predicted_class,
+            "confidence": f"{confidence:.2f}"
+        })
+
+    except Exception as e:
+        return templates.TemplateResponse("error.html", {
+            "request": request,
+            "error_message": f"Внутрішня помилка сервера: {str(e)}"
+        })

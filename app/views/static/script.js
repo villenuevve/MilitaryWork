@@ -3,7 +3,10 @@ const uploadArea = document.getElementById('upload-area');
 const fileInput = document.getElementById('file-input');
 const preview = document.getElementById('preview');
 const submitBtn = document.getElementById('submit-btn');
+const progressBar = document.getElementById('progress-bar');
+const progressContainer = document.querySelector('.progress-container');
 
+// Обробка вибору файлу
 uploadArea.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', handleFiles);
 
@@ -14,17 +17,19 @@ function handleFiles(e) {
         reader.onload = function(event) {
             preview.src = event.target.result;
             preview.style.display = 'block';
-        }
+        };
         reader.readAsDataURL(file);
     }
 }
 
 function showLoader() {
     loaderOverlay.classList.add('visible');
+    startFakeProgress();
 }
 
 function hideLoader() {
     loaderOverlay.classList.remove('visible');
+    finishProgress();
 }
 
 function showNotification(message, type = 'success') {
@@ -34,9 +39,7 @@ function showNotification(message, type = 'success') {
 
     document.body.appendChild(notification);
 
-    setTimeout(() => {
-        notification.classList.add('show');
-    }, 100);
+    setTimeout(() => notification.classList.add('show'), 100);
 
     setTimeout(() => {
         notification.classList.remove('show');
@@ -64,52 +67,49 @@ submitBtn.addEventListener('click', async (e) => {
             body: formData,
         });
 
-        if (!response.ok) {
-            throw new Error('Помилка сервера');
-        }
+        const contentType = response.headers.get('content-type') || '';
 
-        const data = await response.json();
+        if (contentType.includes('application/json')) {
+            const data = await response.json();
 
-        if (data.error) {
-            showNotification(`Помилка: ${data.error}`, 'error');
+            if (data.error) {
+                showNotification(`Помилка: ${data.error}`, 'error');
+            } else {
+                showNotification('Успішно завантажено!', 'success');
+                setTimeout(() => {
+                    window.location.href = `/result?class=${encodeURIComponent(data.class)}&confidence=${encodeURIComponent(data.confidence)}`;
+                }, 1000);
+            }
         } else {
-            showNotification('Успішно завантажено!', 'success');
-            
-            setTimeout(() => {
-                window.location.href = `/result?class=${data.class}&confidence=${data.confidence}&angle=${data.angle}`;
-            }, 1000);
+            showNotification('Помилка: Сервер повернув некоректну відповідь.', 'error');
         }
 
     } catch (error) {
         console.error('Помилка:', error);
-        showNotification('Помилка обробки!', 'error');
+        showNotification('Помилка при обробці запиту!', 'error');
     } finally {
         hideLoader();
-        finishProgress(); 
     }
 });
 
-const progressBar = document.getElementById('progress-bar');
-const progressContainer = document.querySelector('.progress-container');
-
+// Прогрес бар
 function startFakeProgress() {
     progressContainer.style.display = 'block';
     let width = 0;
-
     const interval = setInterval(() => {
         if (width >= 90) { 
             clearInterval(interval);
         } else {
-            width += Math.random() * 2; 
+            width += Math.random() * 2;
             progressBar.style.width = width + '%';
         }
-    }, 200); // Кожні 200мс
+    }, 150);
 }
 
 function finishProgress() {
     progressBar.style.width = '100%';
     setTimeout(() => {
         progressContainer.style.display = 'none';
-        progressBar.style.width = '0%'; // Скинути для наступного разу
-    }, 500); // Після короткої затримки
+        progressBar.style.width = '0%';
+    }, 500);
 }

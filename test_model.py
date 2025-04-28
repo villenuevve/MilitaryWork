@@ -2,7 +2,7 @@ import os
 from ultralytics import YOLO
 
 # Завантажуємо модель
-model = YOLO('app/models/military_detect_best.pt')
+model = YOLO("app/models/military_detect_best.pt")
 
 # Шлях до папки з тестовими зображеннями
 images_dir = '/Users/vlodochka1/Desktop/MilitaryDetect.v1i.yolov8-obb/test/images'
