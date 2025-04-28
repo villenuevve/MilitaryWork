@@ -1,6 +1,7 @@
 fastapi
-gunicorn
+uvicorn
 ultralytics
+numpy
 opencv-python-headless
 python-multipart
-pydantic
+

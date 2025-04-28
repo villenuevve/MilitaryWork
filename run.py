@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 
 app = FastAPI()
-model = YOLO("app/models/military_detect_best.pt")
+model = YOLO("yolov8n-obb.pt")
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
