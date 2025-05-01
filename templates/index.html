@@ -1,69 +1,73 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Military Detection</title>
     <link rel="stylesheet" href="{{ request.url_for('static', path='style.css') }}">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="icon" href="https://cdn-icons-png.freepik.com/256/15616/15616708.png" type="image/png">
 </head>
 <body>
-    <div class="container">
-        <h1>Виявлення Військової Техніки</h1>
+<div class="container">
+    <h1>Виявлення Військової Техніки</h1>
 
-        <div class="upload-section">
-            <form action="/predict" method="POST" enctype="multipart/form-data" id="upload-form">
-                <input type="file" id="file-input" name="image" accept="image/*" required hidden>
-                <label for="file-input" class="custom-file-button">Вибрати файл для аналізу</label>
-                <button type="submit" id="submit-btn">Аналізувати</button>
-            </form>
-        </div>
-
-        {% if metadata is defined and metadata %}
-        <div class="result-card" style="margin-top: 30px;">
-            <div class="metadata-box">
-                <h3>Метадані зображення</h3>
-                <ul>
-                    <li><strong>Дата/Час:</strong> {{ metadata.datetime }}</li>
-                    <li><strong>GPS:</strong> {{ metadata.gps_lat }}, {{ metadata.gps_lon }}</li>
-                    <li><strong>Камера:</strong> {{ metadata.camera_model }}</li>
-                    <li><strong>Яскравість:</strong> {{ metadata.brightness }}</li>
-                    <li><strong>Орієнтація:</strong> {{ metadata.orientation }}</li>
-                    <li><strong>Джерело:</strong> {{ metadata.capture_type }}</li>
-                    <li><strong>Файл:</strong> {{ metadata.source_path }}</li>
-                </ul>
+    <div class="upload-section">
+    <form action="/predict" method="POST" enctype="multipart/form-data" id="upload-form" style="display: flex; flex-direction: column; align-items: center;">
+        <label for="file-input">
+        <div id="drop-zone" class="drop-zone">
+            <p>📁 Перетягніть зображення сюди або натисніть, щоб обрати файл</p>
+            <p id="file-name"></p>
+            <div id="preview-container" style="margin-top: 1rem; display: none;">
+            <img id="preview-image" src="#" alt="Прев’ю" style="max-width: 300px; border-radius: 12px;">
             </div>
-
-            {% if metadata.gps_lat_decimal and metadata.gps_lon_decimal %}
-            <div id="map" style="height: 350px; margin-top: 20px; border-radius: 12px;"></div>
-            {% endif %}
         </div>
-        {% endif %}
-    </div>
+        </label>
+        <input type="file" id="file-input" name="image" accept="image/*" required hidden>
+        <button type="submit" id="submit-btn" class="back-btn">Аналізувати</button>
+    </form>
+</div>
+</div>
 
-    <div class="loader-overlay" id="loader-overlay">
-        <div class="loader"></div>
-    </div>
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const fileName = document.getElementById('file-name');
+    const previewContainer = document.getElementById('preview-container');
+    const previewImage = document.getElementById('preview-image');
 
-    <div class="progress-container">
-        <div class="progress-bar" id="progress-bar"></div>
-    </div>
+    dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragging');
+    });
 
-    <script src="{{ request.url_for('static', path='script.js') }}"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragging');
+    });
 
-    {% if metadata.gps_lat_decimal is not none and metadata.gps_lon_decimal is not none %}
-    <script>
-        const lat = {{ metadata.gps_lat_decimal | safe }};
-        const lon = {{ metadata.gps_lon_decimal | safe }};
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragging');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+        fileInput.files = files;
+        handlePreview(files[0]);
+        }
+    });
 
-        const map = L.map('map').setView([lat, lon], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-        L.marker([lat, lon]).addTo(map).bindPopup('Місце зйомки').openPopup();
-    </script>
-    {% endif %}
+fileInput.addEventListener('change', () => {
+    if (fileInput.files.length > 0) {
+        handlePreview(fileInput.files[0]);
+    }
+});
+
+function handlePreview(file) {
+    fileName.textContent = `✅ Обрано файл: ${file.name}`;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        previewImage.src = e.target.result;
+        previewContainer.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+</script>
 </body>
 </html>

@@ -38,8 +38,8 @@ def extract_metadata(file_bytes, filename, username="анонім"):
                 "datetime": "Невідомо",
                 "gps_lat": "Немає",
                 "gps_lon": "Немає",
-                "gps_lat_decimal": gps_lat_decimal,  
-                "gps_lon_decimal": gps_lon_decimal,
+                "gps_lat_decimal": None,
+                "gps_lon_decimal": None,
                 "camera_model": "Невідомо",
                 "brightness": "Невідомо",
                 "orientation": "Невідомо",
@@ -94,7 +94,7 @@ def extract_metadata(file_bytes, filename, username="анонім"):
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("index.html", {"request": request, "metadata": None})
 
 @app.post("/predict", response_class=HTMLResponse)
 async def predict(request: Request, image: UploadFile = File(...)):
@@ -116,6 +116,10 @@ async def predict(request: Request, image: UploadFile = File(...)):
 
         results = model(img)
         result = results[0]
+
+        # 💾 Зберігаємо зображення з рамкою
+        save_path = BASE_DIR / "static" / "predictions" / image.filename
+        result.save(filename=save_path)
 
         if not result.obb or result.obb.cls is None or len(result.obb.cls) == 0:
             return templates.TemplateResponse("error.html", {
