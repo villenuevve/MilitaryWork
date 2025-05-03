@@ -4,14 +4,16 @@ from fastapi.responses import HTMLResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi import APIRouter
 from ultralytics import YOLO
 import numpy as np
 import cv2
 import exifread
 import io
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parents[2] 
 
+router = APIRouter()
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
@@ -146,8 +148,13 @@ async def predict(request: Request, image: UploadFile = File(...)):
             "metadata": metadata
         })
 
+@router.get("/", response_class=HTMLResponse, name="home")  # 🟢 додай name="home"
+async def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request, "metadata": None})
+
 @app.exception_handler(StarletteHTTPException)
 async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    
     if exc.status_code == 404:
         return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
     return HTMLResponse(content=str(exc.detail), status_code=exc.status_code)
