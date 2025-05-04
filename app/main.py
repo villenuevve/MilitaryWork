@@ -1,7 +1,16 @@
 from fastapi import FastAPI, Request, UploadFile, File
 from fastapi.responses import HTMLResponse
+from fastapi.responses import RedirectResponse
+from app.services.crud import delete_detection
+from app.models.database import SessionLocal
+from app.controllers import login_controller
+from app.services.crud import save_detection
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from app.controllers import auth_controller
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from pathlib import Path
 from ultralytics import YOLO
@@ -12,17 +21,15 @@ import io
 import os
 
 app = FastAPI()
+app.include_router(login_controller.router)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
-# Підключення static
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
-
-# Завантаження моделі
+app.include_router(auth_controller.router)
 model = YOLO(BASE_DIR / "app" / "models" / "military_detect_best.pt")
 CLASSES = ['helicopter', 'jet', 'sam', 'tank', 'truck']
-
 
 def convert_to_degrees(value):
     d, m, s = value
@@ -30,7 +37,6 @@ def convert_to_degrees(value):
     minutes = float(m.num) / float(m.den)
     seconds = float(s.num) / float(s.den)
     return degrees + (minutes / 60.0) + (seconds / 3600.0)
-
 
 def extract_metadata(file_bytes, filename, username="анонім"):
     try:
@@ -87,11 +93,9 @@ def extract_metadata(file_bytes, filename, username="анонім"):
             "error": f"EXIF помилка: {str(e)}"
         }
 
-
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
-
 
 @app.post("/predict", response_class=HTMLResponse)
 async def predict(request: Request, image: UploadFile = File(...)):
@@ -139,9 +143,14 @@ async def predict(request: Request, image: UploadFile = File(...)):
             "metadata": {}
         })
 
-
 @app.exception_handler(StarletteHTTPException)
 async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
     if exc.status_code == 404:
         return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
     return HTMLResponse(content=str(exc.detail), status_code=exc.status_code)
+
+@app.post("/delete/{detection_id}")
+async def delete_detection_route(detection_id: int, request: Request):
+    db = SessionLocal()
+    delete_detection(db, detection_id)
+    return RedirectResponse(url="/history", status_code=303)

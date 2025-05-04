@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Історія виявлень</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+    <link rel="icon" href="https://cdn-icons-png.freepik.com/256/15616/15616708.png" type="image/png">
+</head>
+<body>
+    <div class="container">
+        <h1>Історія виявлень</h1>
+        {% if detections %}
+            <table class="detection-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Клас</th>
+                        <th>Точність</th>
+                        <th>Дата</th>
+                        <th>Дії</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for det in detections %}
+                    <tr>
+                        <td>{{ det.id }}</td>
+                        <td>{{ det.predicted_class }}</td>
+                        <td>{{ "%.2f" | format(det.confidence) }}%</td>
+                        <td>{{ det.timestamp }}</td>
+                        <td>
+                            <form action="/delete/{{ det.id }}" method="post">
+                                <button type="submit" class="delete-btn">Видалити</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Історія поки що порожня.</p>
+        {% endif %}
+
+        <a href="/" class="back-btn">← На головну</a>
+    </div>
+</body>
+</html>

@@ -1,28 +1,33 @@
 from pathlib import Path
-from fastapi import FastAPI, UploadFile, File, Request
+from fastapi import FastAPI, UploadFile, File, Request, APIRouter
+from fastapi import Form
 from fastapi.responses import HTMLResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi import APIRouter
+from app.services.crud import get_detections_by_user
+from app.models.database import SessionLocal
+from app.database import SessionLocal
+from app.services.crud import save_detection
+from datetime import datetime
 from ultralytics import YOLO
 import numpy as np
 import cv2
 import exifread
 import io
 
-BASE_DIR = Path(__file__).resolve().parents[2] 
+BASE_DIR = Path(__file__).resolve().parent.parent.parent  
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 router = APIRouter()
 app = FastAPI()
 
+app.include_router(router)  # 💡 Не забудь додати
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
-
 model = YOLO(BASE_DIR / "app" / "models" / "military_detect_best.pt")
 
 CLASSES = ['helicopter', 'jet', 'sam', 'tank', 'truck']
-
 
 def convert_to_degrees(value):
     """Перетворення EXIF координат у десяткові градуси"""
@@ -134,12 +139,22 @@ async def predict(request: Request, image: UploadFile = File(...)):
         confidence = float(result.obb.conf[0]) * 100
         predicted_class = CLASSES[class_id]
 
+        db = SessionLocal()
+        save_detection(db, {
+        "user_id": 1,
+        "predicted_class": predicted_class,
+        "confidence": confidence,
+        "meta_info": str(metadata),  # ← теж тут
+        "timestamp": datetime.now().isoformat()
+        })
+
         return templates.TemplateResponse("results.html", {
             "request": request,
             "predicted_class": predicted_class,
             "confidence": f"{confidence:.2f}",
             "metadata": metadata
         })
+        
 
     except Exception as e:
         return templates.TemplateResponse("error.html", {
@@ -147,10 +162,23 @@ async def predict(request: Request, image: UploadFile = File(...)):
             "error_message": f"Внутрішня помилка сервера: {str(e)}",
             "metadata": metadata
         })
+        
 
 @router.get("/", response_class=HTMLResponse, name="home")  # 🟢 додай name="home"
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "metadata": None})
+
+@app.get("/history", response_class=HTMLResponse)
+async def history(request: Request):
+    db = SessionLocal()
+    user_id = 1  # тимчасово — потім підставлятимеш з auth
+    detections = get_detections_by_user(db, user_id)
+    return templates.TemplateResponse("history.html", {
+        "request": request,
+        "detections": detections
+    })
+
+def register(username: str = Form(...), password: str = Form(...), email: str = Form(None)):
 
 @app.exception_handler(StarletteHTTPException)
 async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
