@@ -1,0 +1,7 @@
+
+path: /Users/vlodochka1/Desktop/MilitaryDetect.v1i.yolov8-obb
+train: train/images
+val: valid/images
+test: test/images
+nc: 5
+names: ['helicopter', 'jet', 'sam', 'tank', 'truck']

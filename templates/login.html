@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Вхід</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/script.js" defer></script>
+    <link rel="icon" href="https://cdn-icons-png.freepik.com/256/15616/15616708.png" type="image/png">
+</head>
+<body>
+    <div class="login-wrapper">
+        <form method="post" action="/login" class="login-form">
+            <h2>🔐 Вхід до системи</h2>
+
+            {% if error %}
+                <div id="popup" class="popup">
+                    {{ error }}
+                </div>
+                <script>
+                    const popup = document.getElementById("popup");
+                    const navType = performance.getEntriesByType("navigation")[0].type;
+                    if (navType === "reload" || navType === "back_forward") {
+                        popup.remove();
+                    } else {
+                        setTimeout(() => {
+                            popup.style.opacity = '0';
+                            setTimeout(() => popup.remove(), 1000);
+                        }, 3000);
+                    }
+                </script>
+                {% endif %}
+
+            <div class="form-group">
+                <label for="username">👤 Ім’я користувача</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">🔑 Пароль</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password" placeholder="Пароль" />
+                    <span class="toggle-password" onclick="togglePassword()">👁️</span>
+                </div>
+            </div>
+
+            <button type="submit">Увійти</button>
+            <p class="form-note">Ще не маєш акаунту? <a href="/register">Зареєструватись</a></p>
+        </form>
+    </div>
+</body>
+</html>

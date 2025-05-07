@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+gunicorn
+opencv-python
+numpy
+pandas
+torch
+torchvision
+scikit-learn

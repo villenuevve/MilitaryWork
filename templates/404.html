@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Сторінку не знайдено</title>
+    <link rel="stylesheet" href="{{ request.url_for('static', path='style.css') }}">
+    <link rel="icon" href="https://cdn-icons-png.freepik.com/256/15616/15616708.png" type="image/png">
+</head>
+<body>
+    <div class="container">
+        <div class="result-card">
+            <h1 class="error-title">404</h1>
+            <p class="confidence-text">Ой! Такої сторінки не існує.</p>
+
+            <a href="{{ request.url_for('home') }}">
+                <button class="back-btn">← На головну</button>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

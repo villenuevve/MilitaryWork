@@ -1,0 +1,82 @@
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Результат Виявлення</title>
+    <link rel="stylesheet" href="{{ request.url_for('static', path='style.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="icon" href="https://cdn-icons-png.freepik.com/256/15616/15616708.png" type="image/png">
+</head>
+<body>
+    <div class="container">
+        <h1>Результат Виявлення</h1>
+
+        
+<div class="result-layout">
+    <!-- Ліва колонка -->
+    <div class="result-column">
+        <div class="result-card">
+            <h2>Клас: <span class="highlight">{{ predicted_class }}</span></h2>
+            <p class="confidence-text">Впевненість: {{ confidence }}%</p>
+        </div>
+
+        {% if metadata and metadata.source_path %}
+        <div class="result-card">
+            <h3>Зображення</h3>
+            <img src="{{ request.url_for('static', path='predictions/' + metadata.source_path) }}"
+                alt="Результат детекції">
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Права колонка -->
+    <div class="result-column">
+        {% if metadata %}
+        <div class="metadata-box">
+            <h3>Метадані</h3>
+            <ul>
+                <li><strong>Дата/Час:</strong> {{ metadata.datetime }}</li>
+                <li><strong>GPS широта:</strong> {{ metadata.gps_lat }}</li>
+                <li><strong>GPS довгота:</strong> {{ metadata.gps_lon }}</li>
+                <li><strong>Камера:</strong> {{ metadata.camera_model }}</li>
+                <li><strong>Яскравість:</strong> {{ metadata.brightness }}</li>
+                <li><strong>Орієнтація:</strong> {{ metadata.orientation }}</li>
+                <li><strong>Джерело:</strong> {{ metadata.capture_type }}</li>
+                <li><strong>Файл:</strong> {{ metadata.source_path }}</li>
+            </ul>
+        </div>
+
+        {% if metadata.gps_lat_decimal is not none and metadata.gps_lon_decimal is not none %}
+        <div id="map"></div>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+
+<div style="text-align: center; margin-top: 2rem;">
+            <a href="{{ request.url_for('home') }}">
+                <button class="back-btn">← Повернутись</button>
+            </a>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    {% if metadata and metadata.gps_lat_decimal is not none and metadata.gps_lon_decimal is not none %}
+    <script>
+        const lat = {{ metadata.gps_lat_decimal | safe }};
+        const lon = {{ metadata.gps_lon_decimal | safe }};
+
+        const map = L.map('map').setView([lat, lon], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+        L.marker([lat, lon]).addTo(map).bindPopup('Місце зйомки').openPopup();
+    </script>
+    {% endif %}
+
+</body>
+</html>
