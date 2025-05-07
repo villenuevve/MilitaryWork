@@ -1,6 +1,8 @@
 from app.models.detection_entity import Detection
-from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, Text, DateTime
+from datetime import datetime
 from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import relationship
 
 DATABASE_URL = "sqlite:///app/models/detections.db"
 
@@ -13,19 +15,29 @@ Base = declarative_base()
 
 class User(Base):
     __tablename__ = "user"
-    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, nullable=False)
+    username = Column(String, unique=True, index=True)
     hashed_password = Column(String, nullable=False)
 
+    detection = relationship("Detection", back_populates="user")
+
 class Detection(Base):
-    __tablename__ = "detections"
+    __tablename__ = "detection"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
     predicted_class = Column(String)
     confidence = Column(Float)
-    meta_info = Column(String)
-    timestamp = Column(String)
+    meta_info = Column(Text)
+    timestamp = Column(DateTime, default=datetime)
+    user_id = Column(Integer, ForeignKey("user.id")) 
+
+    user = relationship("User", back_populates="detection")
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 

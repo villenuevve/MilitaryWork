@@ -3,14 +3,20 @@ from fastapi.responses import HTMLResponse
 from fastapi.responses import RedirectResponse
 from app.services.crud import delete_detection
 from app.models.database import SessionLocal
+from app.models.database import Base, engine
 from app.controllers import login_controller
+from app.controllers import profile_controller
 from app.services.crud import save_detection
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI
+from fastapi import Request
+from itsdangerous import BadSignature
+from itsdangerous import URLSafeSerializer
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from app.controllers import auth_controller
+from app.controllers import dashboard_controller
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from pathlib import Path
 from ultralytics import YOLO
@@ -22,7 +28,12 @@ import os
 
 app = FastAPI()
 app.include_router(login_controller.router)
+app.include_router(auth_controller.router)
+app.include_router(dashboard_controller.router)
+app.include_router(profile_controller.router)
+serializer = URLSafeSerializer("09931871400")
 
+Base.metadata.create_all(bind=engine)
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
@@ -93,7 +104,17 @@ def extract_metadata(file_bytes, filename, username="анонім"):
             "error": f"EXIF помилка: {str(e)}"
         }
 
-@app.get("/", response_class=HTMLResponse)
+def get_current_user(request: Request):
+    token = request.cookies.get("auth_token")
+    if not token:
+        return None
+    try:
+        data = serializer.loads(token)
+        return data["username"]
+    except BadSignature:
+        return None
+
+@app.get("/", response_class=HTMLResponse, name="home")  # ← name="home" — ключ!
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 

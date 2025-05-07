@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Профіль користувача</title>
+    <script src="/static/script.js" defer></script>
+    <link rel="icon" href="https://cdn-icons-png.freepik.com/256/15616/15616708.png" type="image/png">
+</head>
+<body>
+    <h2 class="profile-title">
+        <span class="emoji">👋</span> Привіт, <span class="highlight">{{ user }}</span>!
+    </h2>  
+
+    <div class="table-wrapper">
+        <table class="detection-table">
+            <thead>
+                <tr>
+                    <th>📅 Дата</th>
+                    <th>🛡️ Тип техніки</th>
+                    <th>🎯 Точність</th>
+                    <th>ℹ️ Інфо</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in detections %}
+                <tr>
+                    <td>{{ d.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>{{ d.predicted_class }}</td>
+                    <td>{{ "%.1f"|format(d.confidence * 100) }}%</td>
+                    <td>{{ d.meta_info }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="action-buttons">
+            <form method="post" action="/profile/clear" onsubmit="return confirm('Справді очистити всю історію?');">
+                <button type="submit" class="danger-button">🗑 Очистити історію</button>
+            </form>
+        </div>
+
+        <div class="action-buttons">
+            <a href="/profile/export" class="export-button" target="_blank">⬇️ Завантажити PDF</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -51,7 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Оновлений toggle-password — підтримує будь-яку кількість іконок з класом .toggle-password
     const togglePasswordIcons = document.querySelectorAll(".toggle-password");
     togglePasswordIcons.forEach((icon) => {
         icon.addEventListener("click", () => {
@@ -111,4 +110,13 @@ document.addEventListener("DOMContentLoaded", () => {
             progressBar.style.width = "0%";
         }, 600);
     }
+
+    fileInput.addEventListener("change", () => {
+        if (fileInput.files.length > 0) {
+            fileName.textContent = `✅ Обрано файл: ${fileInput.files[0].name}`;
+        } else {
+            fileName.textContent = "Файл не обрано";
+        }
+    });
+    
 });
