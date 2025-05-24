@@ -7,18 +7,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Military Detection</title>
     <link rel="stylesheet" href="{{ request.url_for('static', path='style.css') }}">
-    <link rel="icon" href="https://cdn-icons-png.freepik.com/256/15616/15616708.png" type="image/png">
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/256/2785/2785693.png" type="image/png">
 </head>
 <body>
 
-<div class="top-bar">
-    <form method="get" action="/logout">
-        <button class="logout-button">🚪 Вийти</button>
-    </form>
-</div>
+    <div class="top-bar">
+        <div class="button-group">
+            <a href="/history" class="button history">Історія</a>
+            <button type="button" class="button logout" onclick="window.location.href='/logout'">Вийти</button>
+        </div>
+    </div>
 
 <div class="container analysis-container">
-    <h1>Виявлення Військової Техніки</h1>
+    <h1>Виявлення Техніки Спецпризначення</h1>
 
     <div class="upload-section">
         <form action="/predict" method="POST" enctype="multipart/form-data" id="upload-form">

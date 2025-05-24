@@ -8,12 +8,9 @@ from app.services.auth import authenticate_user, create_token
 templates = Jinja2Templates(directory="templates")
 router = APIRouter()
 
-
 @router.get("/login")
 async def login_get(request: Request):
-    # Не передаємо error тут!
     return templates.TemplateResponse("login.html", {"request": request})
-
 
 @router.post("/login")
 async def login_post(
@@ -31,12 +28,14 @@ async def login_post(
         )
 
     response = RedirectResponse(url="/", status_code=302)
-    response.set_cookie("auth_token", create_token(user))
-    return response
+    token = create_token(user)
+    response.set_cookie("auth_token", token)
 
+    return response
 
 @router.get("/logout")
 async def logout():
     response = RedirectResponse(url="/login", status_code=302)
     response.delete_cookie("auth_token")
     return response
+

@@ -1,0 +1,6 @@
+path: /Users/vlodochka1/Special_Equipment.v1i.yolov8
+train: train/images
+val: valid/images
+test: test/images
+nc: 5
+names: ['ambulance', 'fire engine', 'gas emergency', 'police car', 'rescue helicopter']

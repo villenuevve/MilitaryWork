@@ -6,7 +6,7 @@ import io
 import os
 import uuid
 
-model = YOLO('app/models/military_detect_best.pt') 
+model = YOLO('app/models/special.pt') 
 
 def predict_image(file_storage):
     image_bytes = file_storage.read()

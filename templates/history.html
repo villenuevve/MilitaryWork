@@ -4,18 +4,45 @@
     <meta charset="UTF-8">
     <title>Історія виявлень</title>
     <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
-    <link rel="icon" href="https://cdn-icons-png.freepik.com/256/15616/15616708.png" type="image/png">
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/256/2785/2785693.png" type="image/png">
 </head>
 <body>
-    <div class="container">
+    <div class="container fade-in">
         <h1>Історія виявлень</h1>
+        <div class="export-buttons">
+            <a href="/export/pdf" class="btn">⬇️ Завантажити PDF</a>
+            <a href="/export/csv" class="btn">📊 Експортувати CSV</a>
+        </div>
+
+        <form method="get" action="/history" class="filter-form">
+            <label for="from">Від:</label>
+            <input type="date" name="from" id="from" value="{{ request.query_params.get('from', '') }}">
+            
+            <label for="to">До:</label>
+            <input type="date" name="to" id="to" value="{{ request.query_params.get('to', '') }}">
+        
+            <label for="class">Клас техніки:</label>
+            <select name="class" id="class">
+                <option value="">Усі</option>
+                <option value="fire_engine" {% if request.query_params.get('class') == 'fire_engine' %}selected{% endif %}>🚒 Пожежна</option>
+                <option value="ambulance" {% if request.query_params.get('class') == 'ambulance' %}selected{% endif %}>🚑 Швидка</option>
+                <option value="tractor" {% if request.query_params.get('class') == 'tractor' %}selected{% endif %}>🚜 Трактор</option>
+                <option value="excavator" {% if request.query_params.get('class') == 'excavator' %}selected{% endif %}>⛏️ Екскаватор</option>
+            </select>
+        
+            <button type="submit">
+                <span>🔍</span> Фільтрувати
+            </button>            
+        </form>
+            
         {% if detections %}
             <table class="detection-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th>Зображення</th>
                         <th>Клас</th>
                         <th>Точність</th>
+                        <th>GPS</th>
                         <th>Дата</th>
                         <th>Дії</th>
                     </tr>
@@ -23,9 +50,16 @@
                 <tbody>
                     {% for det in detections %}
                     <tr>
-                        <td>{{ det.id }}</td>
+                        <td>
+                            {% if det.image_url %}
+                                <img src="{{ det.image_url }}" alt="img" width="90" style="border-radius: 6px;">
+                            {% else %}
+                                🔘
+                            {% endif %}
+                        </td>
                         <td>{{ det.predicted_class }}</td>
                         <td>{{ "%.2f" | format(det.confidence) }}%</td>
+                        <td>{{ det.gps or "—" }}</td>
                         <td>{{ det.timestamp }}</td>
                         <td>
                             <form action="/delete/{{ det.id }}" method="post">
@@ -37,7 +71,9 @@
                 </tbody>
             </table>
         {% else %}
-            <p>Історія поки що порожня.</p>
+            <div class="empty-message">
+                <p>🤖 Історія поки що порожня. Завантажте зображення для аналізу!</p>
+            </div>
         {% endif %}
 
         <a href="/" class="back-btn">← На головну</a>

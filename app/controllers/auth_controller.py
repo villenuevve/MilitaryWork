@@ -7,7 +7,9 @@ from app.models.database import User
 from app.services.hash_utils import hash_password
 from app.models.database import SessionLocal
 from app.services.auth import authenticate_user, get_user_by_username
+from itsdangerous import URLSafeSerializer
 
+serializer = URLSafeSerializer("80085") 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
@@ -34,7 +36,23 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
     user = authenticate_user(db, username, password)
     if not user:
         return templates.TemplateResponse("login.html", {"request": request, "error": "Невірне ім’я користувача або пароль."}, status_code=400)
-    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+
+    token = serializer.dumps({
+    "username": user.username,
+    "user_id": user.id  
+    })
+
+    print("✅ Token set for user:", user.username, "| ID:", user.id)
+
+    response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+    response.set_cookie(
+    key="auth_token",
+    value=token,
+    httponly=True,
+    samesite="lax", 
+    secure=False     
+)
+    return response
 
 @router.get("/register")
 def show_register_form(request: Request):

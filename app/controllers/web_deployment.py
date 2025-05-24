@@ -1,42 +1,38 @@
 from pathlib import Path
-from fastapi import FastAPI, UploadFile, File, Request, APIRouter
-from fastapi import Form
+from fastapi import FastAPI, UploadFile, File, Request, APIRouter, Form
 from fastapi.responses import HTMLResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
+from app.services.auth import get_current_user_id_from_cookie
 from app.services.crud import get_detections_by_user
 from app.models.database import SessionLocal
-from app.database import SessionLocal
-from app.services.crud import save_detection
-from datetime import datetime
+from app.controllers import history_controller
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from ultralytics import YOLO
+from datetime import datetime
+from app.services.crud import get_detections_by_user, save_detection
+from app.models.database import SessionLocal
 import numpy as np
 import cv2
 import exifread
 import io
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent  
-templates = Jinja2Templates(directory=BASE_DIR / "templates")
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-router = APIRouter()
 app = FastAPI()
-
-app.include_router(router)  # 💡 Не забудь додати
+router = APIRouter()
+app.include_router(router)
+app.include_router(history_controller.router)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
-model = YOLO(BASE_DIR / "app" / "models" / "military_detect_best.pt")
 
-CLASSES = ['helicopter', 'jet', 'sam', 'tank', 'truck']
+model = YOLO(BASE_DIR / "app" / "models" / "special.pt")
+CLASSES = ['ambulance', 'fire engine', 'gas emergency', 'police car', 'rescue helicopter']
 
 def convert_to_degrees(value):
-    """Перетворення EXIF координат у десяткові градуси"""
     d, m, s = value
-    degrees = float(d.num) / float(d.den)
-    minutes = float(m.num) / float(m.den)
-    seconds = float(s.num) / float(s.den)
-    return degrees + (minutes / 60.0) + (seconds / 3600.0)
-
+    return float(d.num) / float(d.den) + float(m.num) / float(m.den) / 60 + float(s.num) / float(s.den) / 3600
 
 def extract_metadata(file_bytes, filename, username="анонім"):
     try:
@@ -56,18 +52,12 @@ def extract_metadata(file_bytes, filename, username="анонім"):
             }
 
         tags = exifread.process_file(io.BytesIO(file_bytes), details=False)
-
         lat = tags.get("GPS GPSLatitude")
         lon = tags.get("GPS GPSLongitude")
+        gps_lat_decimal = convert_to_degrees(lat.values) if lat else None
+        gps_lon_decimal = convert_to_degrees(lon.values) if lon else None
 
-        if lat and lon:
-            gps_lat_decimal = convert_to_degrees(lat.values)
-            gps_lon_decimal = convert_to_degrees(lon.values)
-        else:
-            gps_lat_decimal = None
-            gps_lon_decimal = None
-
-        metadata = {
+        return {
             "datetime": str(tags.get("EXIF DateTimeOriginal", "Невідомо")),
             "gps_lat": str(lat or "Немає"),
             "gps_lon": str(lon or "Немає"),
@@ -80,8 +70,6 @@ def extract_metadata(file_bytes, filename, username="анонім"):
             "capture_type": "aerial" if "drone" in filename.lower() else "ground",
             "username": username
         }
-
-        return metadata
 
     except Exception as e:
         return {
@@ -99,53 +87,46 @@ def extract_metadata(file_bytes, filename, username="анонім"):
             "error": f"EXIF помилка: {str(e)}"
         }
 
-@app.get("/", response_class=HTMLResponse)
+@router.get("/", response_class=HTMLResponse, name="home")
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "metadata": None})
 
-@app.post("/predict", response_class=HTMLResponse)
+@router.post("/predict", response_class=HTMLResponse)
 async def predict(request: Request, image: UploadFile = File(...)):
     try:
         contents = await image.read()
         metadata = extract_metadata(contents, image.filename)
-        print("DEBUG METADATA:", metadata)
-        print("DEBUG GPS decimal:", metadata.get("gps_lat_decimal"), metadata.get("gps_lon_decimal"))
-
-        nparr = np.frombuffer(contents, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        img = cv2.imdecode(np.frombuffer(contents, np.uint8), cv2.IMREAD_COLOR)
 
         if img is None:
             return templates.TemplateResponse("error.html", {
                 "request": request,
-                "error_message": "Помилка обробки файлу. Завантажте коректне зображення.",
+                "error_message": "Помилка обробки файлу.",
                 "metadata": metadata
             })
 
-        results = model(img)
-        result = results[0]
-
-        # 💾 Зберігаємо зображення з рамкою
+        result = model(img)[0]
         save_path = BASE_DIR / "static" / "predictions" / image.filename
         result.save(filename=save_path)
 
-        if not result.obb or result.obb.cls is None or len(result.obb.cls) == 0:
+        if not result.boxes or result.boxes.cls is None or len(result.boxes.cls) == 0:
             return templates.TemplateResponse("error.html", {
                 "request": request,
-                "error_message": "На зображенні не виявлено жодного об'єкта.",
+                "error_message": "Об'єкти не знайдено.",
                 "metadata": metadata
             })
 
-        class_id = int(result.obb.cls[0])
-        confidence = float(result.obb.conf[0]) * 100
+        class_id = int(result.boxes.cls[0])
+        confidence = float(result.boxes.conf[0]) * 100
         predicted_class = CLASSES[class_id]
 
         db = SessionLocal()
         save_detection(db, {
-        "user_id": 1,
-        "predicted_class": predicted_class,
-        "confidence": confidence,
-        "meta_info": str(metadata),  # ← теж тут
-        "timestamp": datetime.now().isoformat()
+            "user_id": 1,
+            "predicted_class": predicted_class,
+            "confidence": confidence,
+            "meta_info": str(metadata),
+            "timestamp": datetime.now()
         })
 
         return templates.TemplateResponse("results.html", {
@@ -154,35 +135,29 @@ async def predict(request: Request, image: UploadFile = File(...)):
             "confidence": f"{confidence:.2f}",
             "metadata": metadata
         })
-        
 
     except Exception as e:
         return templates.TemplateResponse("error.html", {
             "request": request,
-            "error_message": f"Внутрішня помилка сервера: {str(e)}",
-            "metadata": metadata
+            "error_message": f"Серверна помилка: {str(e)}",
+            "metadata": {}
         })
-        
-
-@router.get("/", response_class=HTMLResponse, name="home")  # 🟢 додай name="home"
-async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "metadata": None})
 
 @app.get("/history", response_class=HTMLResponse)
 async def history(request: Request):
+    user_id = get_current_user_id_from_cookie(request)
+    if not user_id:
+        return RedirectResponse("/login")
+
     db = SessionLocal()
-    user_id = 1  # тимчасово — потім підставлятимеш з auth
     detections = get_detections_by_user(db, user_id)
     return templates.TemplateResponse("history.html", {
         "request": request,
         "detections": detections
     })
 
-def register(username: str = Form(...), password: str = Form(...), email: str = Form(None)):
-
 @app.exception_handler(StarletteHTTPException)
 async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
-    
     if exc.status_code == 404:
         return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
     return HTMLResponse(content=str(exc.detail), status_code=exc.status_code)

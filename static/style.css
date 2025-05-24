@@ -286,6 +286,7 @@ img {
     z-index: 999;
 }
 
+/* Кнопка Вийти — червона */
 .logout-button {
     background-color: #ef4444;
     color: white;
@@ -300,6 +301,36 @@ img {
 .logout-button:hover {
     background-color: #dc2626;
 }
+
+.button.logout {
+    background: linear-gradient(to right, #ef4444, #dc2626);
+}
+
+.button.logout:hover {
+    background: linear-gradient(to right, #dc2626, #b91c1c);
+}
+.fade-in {
+    animation: fadeInUp 0.8s ease forwards;
+}
+
+a.button {
+    background: linear-gradient(to right, #00c5e0, #00f5a0);
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: bold;
+    display: inline-block;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+a.button:hover {
+    background: linear-gradient(to right, #00bcd4, #00e59c);
+}
+
 .analysis-container {
     display: flex;
     flex-direction: column;
@@ -322,6 +353,139 @@ img {
 
 .analyze-btn:hover {
     background: linear-gradient(to right, #00c68a, #00c5e0);
+}
+
+.empty-message {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    padding: 1rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.05);
+    align-items: center;
+    justify-content: flex-start;
+    backdrop-filter: blur(4px);
+}
+
+.filter-form label {
+    margin-right: 0.4rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-light);
+}
+
+.filter-form input[type="date"],
+.filter-form select {
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border 0.2s ease;
+}
+
+.filter-form input[type="date"]:focus,
+.filter-form select:focus {
+    border-color: var(--accent);
+}
+
+.filter-form button {
+    padding: 0.55rem 1rem;
+    background: linear-gradient(135deg, #00f5a0, #00d9f5);
+    color: #000;
+    font-weight: bold;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-form button:hover {
+    background: linear-gradient(135deg, #00d9f5, #00c3f5);
+    transform: scale(1.05);
+}
+
+.export-buttons {
+    margin: 1rem 0;
+    display: flex;
+    gap: 1rem;
+}
+.export-buttons .btn {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    background: linear-gradient(45deg, #00f5a0, #00d9f5);
+    color: #000;
+    font-weight: bold;
+    text-decoration: none;
+}
+.detection-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.detection-table th,
+.detection-table td {
+    padding: 1rem;
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--text-light);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.detection-table th {
+    background: rgba(255, 255, 255, 0.06);
+    font-weight: bold;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.detection-table td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.detection-table td:last-child {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.delete-btn {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.delete-btn:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: scale(1.05);
 }
 
 #preview-container {
