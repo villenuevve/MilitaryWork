@@ -13,22 +13,14 @@
             <h2>🔐 Вхід до системи</h2>
 
             {% if error %}
-                <div id="popup" class="popup">
-                    {{ error }}
-                </div>
+                <div class="popup error">{{ error }}</div>
                 <script>
-                    const popup = document.getElementById("popup");
-                    const navType = performance.getEntriesByType("navigation")[0].type;
-                    if (navType === "reload" || navType === "back_forward") {
-                        popup.remove();
-                    } else {
-                        setTimeout(() => {
-                            popup.style.opacity = '0';
-                            setTimeout(() => popup.remove(), 1000);
-                        }, 3000);
-                    }
+                    setTimeout(() => {
+                        const popup = document.querySelector(".popup.error");
+                        if (popup) popup.style.opacity = "0";
+                    }, 3000);
                 </script>
-                {% endif %}
+            {% endif %}
 
             <div class="form-group">
                 <label for="username">👤 Ім’я користувача</label>
@@ -47,5 +39,21 @@
             <p class="form-note">Ще не маєш акаунту? <a href="/register">Зареєструватись</a></p>
         </form>
     </div>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("success") === "1") {
+            const popup = document.createElement("div");
+            popup.className = "popup";
+            popup.textContent = "✅ Успішна реєстрація!";
+            popup.style.backgroundColor = "#22c55e"; // Зелений фон
+    
+            document.body.appendChild(popup);
+    
+            setTimeout(() => {
+                popup.style.opacity = "0";
+                setTimeout(() => popup.remove(), 1000);
+            }, 3000);
+        }
+    </script>
 </body>
 </html>

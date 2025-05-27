@@ -15,7 +15,6 @@ def predict_image(file_storage):
 
     results = model.predict(source=img_array, save=False, conf=0.1)
 
-    # Підтримка OBB
     boxes = results[0].obb if hasattr(results[0], 'obb') else results[0].boxes
 
     if boxes is None or len(boxes.cls) == 0:

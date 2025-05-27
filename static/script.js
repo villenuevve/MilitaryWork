@@ -51,7 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Оновлений toggle-password — підтримує будь-яку кількість іконок з класом .toggle-password
     const togglePasswordIcons = document.querySelectorAll(".toggle-password");
     togglePasswordIcons.forEach((icon) => {
         icon.addEventListener("click", () => {
@@ -111,4 +110,22 @@ document.addEventListener("DOMContentLoaded", () => {
             progressBar.style.width = "0%";
         }, 600);
     }
+
+    document.querySelectorAll("th.sortable").forEach(header => {
+        header.addEventListener("click", () => {
+            const table = header.closest("table");
+            const tbody = table.querySelector("tbody");
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+            const index = Array.from(header.parentNode.children).indexOf(header);
+            const isAsc = header.classList.toggle("asc");
+    
+            rows.sort((a, b) => {
+                const valA = a.children[index].textContent.trim();
+                const valB = b.children[index].textContent.trim();
+                return isAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            });
+    
+            rows.forEach(row => tbody.appendChild(row));
+        });
+    });    
 });

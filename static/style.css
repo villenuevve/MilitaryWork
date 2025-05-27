@@ -58,6 +58,7 @@ body::before {
 h1, h2 {
     text-align: center;
     background: linear-gradient(90deg, var(--primary), var(--secondary));
+    font-size: clamp(1.8rem, 5vw, 3rem); /* Адаптивний розмір */
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     font-weight: 900;
@@ -85,7 +86,6 @@ button:hover, .back-btn:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 20px rgba(0, 255, 255, 0.4);
 }
-
 img {
     width: 100%;
     border-radius: 15px;
@@ -236,11 +236,19 @@ img {
     width: 100%;
 }
 
+.form-note {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
 .form-note a {
     color: var(--accent);
     text-decoration: underline;
     transition: color 0.3s;
 }
+
 .form-note a:hover {
     color: #00e0ff;
 }
@@ -277,6 +285,20 @@ img {
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     z-index: 1000;
     transition: opacity 0.5s ease-out;
+}
+
+.popup.error {
+    background-color: #ef4444;
+}
+
+.success-message {
+    background-color: #22c55e;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 1rem;
+    font-weight: bold;
 }
 
 .top-bar {
@@ -488,6 +510,48 @@ a.button:hover {
     transform: scale(1.05);
 }
 
+.thumbnail {
+    width: 50px;
+    height: auto;
+    border-radius: 6px;
+}
+
+.styled-select {
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.1));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    color: var(--text-light);
+    font-size: 1rem;
+    width: 100%;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='white' stroke-width='2'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 12px;
+    cursor: pointer;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+.styled-select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+}
+
+.button-group .button {
+    padding: 10px 20px;
+    font-size: 15px;
+    font-weight: bold;
+    border-radius: 16px;
+    height: 48px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+}
+
 #preview-container {
     margin-top: 1rem;
     display: none;
@@ -555,3 +619,4 @@ a.button:hover {
         margin-bottom: 20px;
     }
 }
+

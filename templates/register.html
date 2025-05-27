@@ -24,14 +24,55 @@
             <div class="form-group">
                 <label for="password">🔑 Пароль</label>
                 <div class="password-wrapper">
-                    <input type="password" id="password" name="password" placeholder="Пароль" />
+                    <input type="password" id="password" name="password" placeholder="Пароль" minlength="2" required />
                     <span class="toggle-password" onclick="togglePassword()">👁️</span>
                 </div>
             </div>
 
+            <div class="form-group">
+                <label for="confirm_password">🔁 Підтвердження пароля</label>
+                <div class="password-wrapper">
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Ще раз пароль" minlength="2" required />
+                    <span class="toggle-password" onclick="togglePassword()">👁️</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="role">Роль:</label>
+                <select name="role" class="styled-select" required>
+                    <option value="user" selected>👤 Звичайний користувач</option>
+                    <option value="admin">🛡️ Адміністратор</option>
+                </select>
+            </div>
+
             <button type="submit">Зареєструватися</button>
-            <p class="form-note">Вже маєш акаунт? <a href="/login">Увійти</a></p>
+            <p class="form-note" style="text-align: center; margin-top: 1rem;">
+                Вже маєш акаунт? <a href="/login">Увійти</a>
+            </p>
+            
         </form>
     </div>
+    <script>
+        document.querySelector("form").addEventListener("submit", function(e) {
+            const pass = document.getElementById("password").value;
+            const confirm = document.getElementById("confirm_password").value;
+        
+            if (pass !== confirm) {
+                e.preventDefault();
+        
+                if (!document.querySelector(".popup")) {
+                    const popup = document.createElement("div");
+                    popup.className = "popup";
+                    popup.textContent = "❌ Паролі не співпадають!";
+                    document.body.appendChild(popup);
+        
+                    setTimeout(() => {
+                        popup.style.opacity = "0";
+                        setTimeout(() => popup.remove(), 1000);
+                    }, 3000);
+                }
+            }
+        });
+    </script>        
 </body>
 </html>

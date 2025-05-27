@@ -5,6 +5,7 @@ from fastapi import Form
 from sqlalchemy.orm import Session
 from app.models.database import User
 from app.services.hash_utils import hash_password
+from app.services.auth import get_password_hash 
 from app.models.database import SessionLocal
 from app.services.auth import authenticate_user, get_user_by_username
 from itsdangerous import URLSafeSerializer
@@ -59,14 +60,38 @@ def show_register_form(request: Request):
     return templates.TemplateResponse("register.html", {"request": request, "error": None})
 
 @router.post("/register")
-def register(request: Request, username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
-    existing_user = get_user_by_username(db, username)
+async def register(request: Request,
+                    username: str = Form(...),
+                    password: str = Form(...),
+                    confirm_password: str = Form(...),
+                    role: str = Form(...)):
+    db = SessionLocal()
+
+    if password != confirm_password:
+        return templates.TemplateResponse("register.html", {
+            "request": request,
+            "error": "❌ Паролі не співпадають."
+        })
+
+    if len(password) < 2:
+        return templates.TemplateResponse("register.html", {
+            "request": request,
+            "error": "❗ Пароль має містити щонайменше 2 символи."
+        })
+
+    existing_user = db.query(User).filter(User.username == username).first()
     if existing_user:
-        return templates.TemplateResponse("register.html", {"request": request, "error": "Користувач із таким ім’ям вже існує."}, status_code=400)
-    user = User(username=username, hashed_password=hash_password(password))
-    db.add(user)
+        return templates.TemplateResponse("register.html", {
+            "request": request,
+            "error": "❌ Користувач з таким ім’ям вже існує."
+        })
+
+    hashed = get_password_hash(password)
+    new_user = User(username=username, hashed_password=hashed, role=role)    
+    db.add(new_user)
     db.commit()
-    return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+
+    return RedirectResponse(url="/login?success=1", status_code=302)
 
 @router.get("/logout")
 def logout():

@@ -5,6 +5,14 @@
     <title>Історія виявлень</title>
     <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/256/2785/2785693.png" type="image/png">
+    <script>
+        function confirmLogout() {
+            return confirm("Ви впевнені, що хочете вийти?");
+        }
+        function confirmDeleteRecord() {
+            return confirm("Ви впевнені, що хочете видалити цей запис?");
+        }
+    </script>
 </head>
 <body>
     <div class="container fade-in">
@@ -12,6 +20,16 @@
         <div class="export-buttons">
             <a href="/export/pdf" class="btn">⬇️ Завантажити PDF</a>
             <a href="/export/csv" class="btn">📊 Експортувати CSV</a>
+        </div>
+
+        <div class="user-info" style="text-align: right; margin-bottom: 1rem;">
+            👤 {{ username }} ({{ "Адміністратор" if role == "admin" else "Користувач" }})
+        </div>
+        <div class="top-bar" style="text-align: right; margin-bottom: 1rem;">
+            <div class="button-group">
+                <a href="/" class="button history">🏠 На головну</a>
+                <button type="button" class="button logout" onclick="window.location.href='/logout'">🚪 Вийти</button>
+            </div>
         </div>
 
         <form method="get" action="/history" class="filter-form">
@@ -24,56 +42,101 @@
             <label for="class">Клас техніки:</label>
             <select name="class" id="class">
                 <option value="">Усі</option>
-                <option value="fire_engine" {% if request.query_params.get('class') == 'fire_engine' %}selected{% endif %}>🚒 Пожежна</option>
                 <option value="ambulance" {% if request.query_params.get('class') == 'ambulance' %}selected{% endif %}>🚑 Швидка</option>
-                <option value="tractor" {% if request.query_params.get('class') == 'tractor' %}selected{% endif %}>🚜 Трактор</option>
-                <option value="excavator" {% if request.query_params.get('class') == 'excavator' %}selected{% endif %}>⛏️ Екскаватор</option>
+                <option value="fire engine" {% if request.query_params.get('class') == 'fire engine' %}selected{% endif %}>🚒 Пожежна</option>
+                <option value="gas emergency" {% if request.query_params.get('class') == 'gas emergency' %}selected{% endif %}>🛢️ Газова</option>
+                <option value="police car" {% if request.query_params.get('class') == 'police car' %}selected{% endif %}>🚓 Поліцейська</option>
+                <option value="rescue helicopter" {% if request.query_params.get('class') == 'rescue helicopter' %}selected{% endif %}>🚁 Гелікоптер</option>
             </select>
         
             <button type="submit">
                 <span>🔍</span> Фільтрувати
             </button>            
         </form>
-            
+
+        {% if role == "admin" %}
+            <p>🔢 Загалом: {{ total }}</p>
+            <p>📊 Середня точність: {{ avg_conf }}%</p>
+            <p>🔍 Кількість класів: {{ classes|length }}</p>
+        {% endif %}
+
         {% if detections %}
-            <table class="detection-table">
-                <thead>
-                    <tr>
-                        <th>Зображення</th>
-                        <th>Клас</th>
-                        <th>Точність</th>
-                        <th>GPS</th>
-                        <th>Дата</th>
-                        <th>Дії</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for det in detections %}
-                    <tr>
-                        <td>
-                            {% if det.image_url %}
-                                <img src="{{ det.image_url }}" alt="img" width="90" style="border-radius: 6px;">
-                            {% else %}
-                                🔘
-                            {% endif %}
-                        </td>
-                        <td>{{ det.predicted_class }}</td>
-                        <td>{{ "%.2f" | format(det.confidence) }}%</td>
-                        <td>{{ det.gps or "—" }}</td>
-                        <td>{{ det.timestamp }}</td>
-                        <td>
-                            <form action="/delete/{{ det.id }}" method="post">
-                                <button type="submit" class="delete-btn">Видалити</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <table class="detection-table">
+            <thead>
+                <tr>
+                    <th class="sortable">Зображення</th>
+                    <th class="sortable">Клас</th>
+                    <th class="sortable">Точність</th>
+                    <th class="sortable">GPS</th>
+                    <th class="sortable">Дата</th>
+                    {% if role == "admin" %}
+                    <th>ДІЇ</th>
+                    {% endif %}
+                </tr>
+            </thead>                
+            <tbody>
+                {% for det in detections %}
+                <tr>
+                    <td>
+                        {% if det.image_url %}
+                        <img src="/static/predictions/{{ det.image_filename }}" alt="preview" class="thumbnail" />
+                        {% else %}
+                        🔘
+                        {% endif %}
+                    </td>
+                    <td>{{ det.predicted_class }}</td>
+                    <td>{{ "%.2f" | format(det.confidence) }}%</td>
+                    <td>{{ det.gps or "—" }}</td>
+                    <td>{{ det.timestamp }}</td>
+                    {% if role == "admin" %}
+                    <td>
+                        <form method="post" action="/delete/{{ det.id }}" onsubmit="return confirmDeleteRecord();">
+                            <button class="delete-button">Видалити</button>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
         {% else %}
-            <div class="empty-message">
-                <p>🤖 Історія поки що порожня. Завантажте зображення для аналізу!</p>
-            </div>
+        <div class="empty-message">
+            <p>🤖 Історія поки що порожня. Завантажте зображення для аналізу!</p>
+        </div>
+        {% endif %}
+
+        {% if role == "admin" and user_infos %}
+        <h2 style="margin-top: 2rem;">👥 Користувачі</h2>
+        <table class="detection-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Ім’я користувача</th>
+                    <th>Роль</th>
+                    <th>Виявлень</th>
+                    <th>ДІЇ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in user_infos %}
+                <tr>
+                    <td>{{ u.id }}</td>
+                    <td>{{ u.username }}</td>
+                    <td>{{ u.role }}</td>
+                    <td>{{ u.detections_count }}</td>
+                    <td>
+                        {% if u.id != current_user_id %}
+                        <form action="/admin/delete-user/{{ u.id }}" method="post" onsubmit="return confirmDeleteRecord();">
+                            <button type="submit" class="delete-button">🗑️ Видалити</button>
+                        </form>
+                        {% else %}
+                        <span style="color: gray;">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
         {% endif %}
 
         <a href="/" class="back-btn">← На головну</a>

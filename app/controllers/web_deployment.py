@@ -14,8 +14,10 @@ from datetime import datetime
 from app.services.crud import get_detections_by_user, save_detection
 from app.models.database import SessionLocal
 import numpy as np
-import cv2
 import exifread
+import logging
+import json
+import cv2
 import io
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -26,6 +28,7 @@ app.include_router(router)
 app.include_router(history_controller.router)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
+logger = logging.getLogger(__name__)
 
 model = YOLO(BASE_DIR / "app" / "models" / "special.pt")
 CLASSES = ['ambulance', 'fire engine', 'gas emergency', 'police car', 'rescue helicopter']
@@ -99,10 +102,10 @@ async def predict(request: Request, image: UploadFile = File(...)):
         img = cv2.imdecode(np.frombuffer(contents, np.uint8), cv2.IMREAD_COLOR)
 
         if img is None:
-            return templates.TemplateResponse("error.html", {
+            return templates.TemplateResponse("index.html", {
                 "request": request,
-                "error_message": "Помилка обробки файлу.",
-                "metadata": metadata
+                "metadata": metadata,
+                "error": "❌ Неможливо обробити зображення. Перевірте формат файлу."
             })
 
         result = model(img)[0]
@@ -110,6 +113,7 @@ async def predict(request: Request, image: UploadFile = File(...)):
         result.save(filename=save_path)
 
         if not result.boxes or result.boxes.cls is None or len(result.boxes.cls) == 0:
+            # ⛔️ НЕ ЧІПАЄМО: Твоя умова для окремої сторінки, якщо немає техніки
             return templates.TemplateResponse("error.html", {
                 "request": request,
                 "error_message": "Об'єкти не знайдено.",
@@ -121,11 +125,13 @@ async def predict(request: Request, image: UploadFile = File(...)):
         predicted_class = CLASSES[class_id]
 
         db = SessionLocal()
+        user_id = get_current_user_id_from_cookie(request)
+
         save_detection(db, {
-            "user_id": 1,
+            "user_id": user_id,
             "predicted_class": predicted_class,
             "confidence": confidence,
-            "meta_info": str(metadata),
+            "meta_info": json.dumps(metadata),
             "timestamp": datetime.now()
         })
 
@@ -137,10 +143,11 @@ async def predict(request: Request, image: UploadFile = File(...)):
         })
 
     except Exception as e:
-        return templates.TemplateResponse("error.html", {
+        logger.error("Помилка обробки зображення:", exc_info=True)
+        return templates.TemplateResponse("index.html", {
             "request": request,
-            "error_message": f"Серверна помилка: {str(e)}",
-            "metadata": {}
+            "metadata": {},
+            "error": "🚨 Сталася непередбачувана помилка при обробці зображення. Спробуйте інший файл."
         })
 
 @app.get("/history", response_class=HTMLResponse)

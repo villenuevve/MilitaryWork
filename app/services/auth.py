@@ -18,6 +18,9 @@ def verify_password(plain_password, hashed_password):
 def get_user_by_username(db, username: str):
     return db.query(User).filter(User.username == username).first()
 
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+
 def authenticate_user(db, username: str, password: str):
     user = db.query(User).filter(User.username == username).first()
     if not user or not verify_password(password, user.hashed_password):
