@@ -34,8 +34,10 @@ model = YOLO(BASE_DIR / "app" / "models" / "special.pt")
 CLASSES = ['ambulance', 'fire engine', 'gas emergency', 'police car', 'rescue helicopter']
 
 def convert_to_degrees(value):
-    d, m, s = value
-    return float(d.num) / float(d.den) + float(m.num) / float(m.den) / 60 + float(s.num) / float(s.den) / 3600
+    d = float(value[0].num) / float(value[0].den)
+    m = float(value[1].num) / float(value[1].den)
+    s = float(value[2].num) / float(value[2].den)
+    return d + (m / 60.0) + (s / 3600.0)
 
 def extract_metadata(file_bytes, filename, username="анонім"):
     try:
@@ -54,11 +56,25 @@ def extract_metadata(file_bytes, filename, username="анонім"):
                 "username": username
             }
 
+        # Читання EXIF
         tags = exifread.process_file(io.BytesIO(file_bytes), details=False)
+
+        # GPS
         lat = tags.get("GPS GPSLatitude")
         lon = tags.get("GPS GPSLongitude")
-        gps_lat_decimal = convert_to_degrees(lat.values) if lat else None
-        gps_lon_decimal = convert_to_degrees(lon.values) if lon else None
+        lat_ref = tags.get("GPS GPSLatitudeRef")
+        lon_ref = tags.get("GPS GPSLongitudeRef")
+
+        if lat and lat_ref and lon and lon_ref:
+            gps_lat_decimal = convert_to_degrees(lat.values)
+            gps_lon_decimal = convert_to_degrees(lon.values)
+            if lat_ref.values != "N":
+                gps_lat_decimal = -gps_lat_decimal
+            if lon_ref.values != "E":
+                gps_lon_decimal = -gps_lon_decimal
+        else:
+            gps_lat_decimal = None
+            gps_lon_decimal = None
 
         return {
             "datetime": str(tags.get("EXIF DateTimeOriginal", "Невідомо")),
@@ -126,6 +142,8 @@ async def predict(request: Request, image: UploadFile = File(...)):
 
         db = SessionLocal()
         user_id = get_current_user_id_from_cookie(request)
+        print("=== METADATA ===")
+        print(metadata)
 
         save_detection(db, {
             "user_id": user_id,

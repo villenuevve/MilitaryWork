@@ -8,7 +8,6 @@ from app.controllers import web_deployment
 from app.controllers import history_controller
 from itsdangerous import URLSafeSerializer
 from pathlib import Path
-from itsdangerous import URLSafeSerializer
 from fastapi import Request
 
 app = FastAPI()

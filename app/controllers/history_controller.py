@@ -78,13 +78,20 @@ async def history(request: Request):
             meta = {}
 
         detections.append({
-            "id": det.id,
-            "predicted_class": det.predicted_class,
-            "confidence": det.confidence,
-            "timestamp": det.timestamp,
-            "image_url": meta.get("image_path", ""),
-            "gps": meta.get("gps", "")
-        })
+        "id": det.id,
+        "predicted_class": det.predicted_class,
+        "confidence": det.confidence,
+        "timestamp": det.timestamp,
+        "image_url": meta.get("image_path", ""),
+        "gps_lat_decimal": meta.get("gps_lat_decimal"),
+        "gps_lon_decimal": meta.get("gps_lon_decimal"),
+        "camera_model": meta.get("camera_model", "Невідомо"),
+        "datetime": meta.get("datetime", "Невідомо"),
+        "username": meta.get("username", "анонім"),
+        "orientation": meta.get("orientation", "Невідомо"),
+        "brightness": meta.get("brightness", "Невідомо"),
+        "source_path": meta.get("source_path", "")
+    })
 
     total = len(detections)
     avg_conf = round(sum([d["confidence"] for d in detections]) / total, 2) if total else 0

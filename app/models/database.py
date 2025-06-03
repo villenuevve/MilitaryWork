@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey
 from datetime import datetime
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.orm import relationship
-DATABASE_URL = "sqlite:///app/models/detections.db"
+DATABASE_URL = "sqlite:////Users/vlodochka1/SpecialEquipment/app/models/detections.db"
 
 engine = create_engine(
     DATABASE_URL, connect_args={"check_same_thread": False}

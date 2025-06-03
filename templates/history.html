@@ -86,7 +86,11 @@
                     </td>
                     <td>{{ det.predicted_class }}</td>
                     <td>{{ "%.2f" | format(det.confidence) }}%</td>
-                    <td>{{ det.gps or "—" }}</td>
+                        <td>
+                            {% if det.gps_lat_decimal and det.gps_lon_decimal %}
+                            <p>GPS: {{ det.gps_lat_decimal }}, {{ det.gps_lon_decimal }}</p>
+                            {% endif %}
+                        </td>
                     <td>{{ det.timestamp }}</td>
                     {% if role == "admin" %}
                     <td>

@@ -1,14 +1,13 @@
 from fastapi import APIRouter, Request, Form, Depends, status
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from fastapi import Form
 from sqlalchemy.orm import Session
 from app.models.database import User
-from app.services.hash_utils import hash_password
-from app.services.auth import get_password_hash 
+from app.services.auth import get_password_hash, authenticate_user
+from app.services.auth import get_current_user_id_from_cookie
 from app.models.database import SessionLocal
-from app.services.auth import authenticate_user, get_user_by_username
 from itsdangerous import URLSafeSerializer
+from passlib.context import CryptContext
 
 serializer = URLSafeSerializer("80085") 
 router = APIRouter()
@@ -98,4 +97,3 @@ def logout():
     response = RedirectResponse(url="/login", status_code=302)
     response.delete_cookie("auth_token")
     return response
-
